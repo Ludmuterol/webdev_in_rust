@@ -1,4 +1,7 @@
 use rocket::fs::NamedFile;
+use rocket::http::{CookieJar, Cookie};
+use rocket::outcome::IntoOutcome;
+use rocket::request::FromRequest;
 use rocket::response::status::NotFound;
 use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
@@ -15,7 +18,7 @@ async fn register(incoming: String) -> String {
             match list.len() {
                 0 => {
                     database::create_new_login(login).await;
-                    "Yay!".to_owned()
+                    "Ok".to_owned()
                 },
                 _ => "Error".to_owned(),
             }
@@ -25,12 +28,15 @@ async fn register(incoming: String) -> String {
 }
 
 #[post("/api/login", data = "<incoming>")]
-async fn login(incoming: String) -> String {
+async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
             let list = database::query_login_data(login).await;
             match list.len() {
-                1 => "Yay!".to_owned(),
+                1 => {
+                    jar.add_private(Cookie::new("user_id", "1".to_owned()));
+                    "Ok".to_owned()
+                },
                 _ => "Error".to_owned(),
             }
         }
@@ -61,8 +67,25 @@ async fn index() -> Result<NamedFile, NotFound<String>> {
     get_index().await
 }
 
+struct User(usize);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for User {
+       type Error = std::convert::Infallible;
+       async fn from_request(request: &'r rocket::Request<'_>) ->  rocket::request::Outcome<User,Self::Error> {
+           request.cookies().get_private("user_id").and_then(|cookie| cookie.value().parse().ok())
+               .map(User)
+               .or_forward(())
+       }
+}
+
+#[get("/secret")]
+fn secret(user: User) -> String {
+    "Secret!".to_owned()
+}
+
 #[launch]
 async fn rocket() -> _ {
     database::init().await;
-    rocket::build().mount("/", routes![index, static_files, login, register])
+    rocket::build().mount("/", routes![index, static_files, login, register, secret])
 }
