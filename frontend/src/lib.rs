@@ -6,6 +6,7 @@ use yew::prelude::*;
 mod components;
 
 use components::atoms::main_title::MainTitle;
+use components::atoms::custom_button::CustomButton;
 use components::molecules::login_form::LoginForm;
 use components::molecules::register_form::RegisterForm;
 
@@ -38,12 +39,23 @@ pub fn App() -> Html {
             log!(content);
         });
     };
+    let on_logout = |_|{
+        wasm_bindgen_futures::spawn_local(async move {
+            let res = Request::get("/api/logout")
+                .send()
+                .await;
+            let content = res.unwrap().text().await.unwrap();
+            log!(content);
+        });
+    };
     html! {
         <div class={stylesheet}>
             <MainTitle title="Hi there!2" />
             <LoginForm handle_submit={on_login_submit}/>
             <br />
             <RegisterForm handle_submit={on_register_submit}/>
+            <br />
+            <CustomButton label="Logout" handle_onclick={on_logout}/>
         </div>
     }
 }

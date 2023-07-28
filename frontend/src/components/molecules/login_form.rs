@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::components::atoms::custom_button::CustomButton;
+use crate::components::atoms::custom_form_button::CustomFormButton;
 use crate::components::atoms::pass_input::PassInput;
 use crate::components::atoms::text_input::TextInput;
 
@@ -43,7 +43,7 @@ pub fn login_form(props: &Props) -> Html {
         <form onsubmit={on_submit}>
             <TextInput name="username" handle_onchange={username_changed} />
             <PassInput name="password" handle_onchange={password_changed} />
-            <CustomButton label="Login" />
+            <CustomFormButton label="Login" />
         </form>
     }
 }

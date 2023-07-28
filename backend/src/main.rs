@@ -44,6 +44,12 @@ async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
     }
 }
 
+#[get("/api/logout")]
+async fn logout(jar: &CookieJar<'_>) -> String {
+    jar.remove_private(Cookie::named("user_id"));
+    "Ok".to_owned()
+}
+
 // Return the index file as a Rocket NamedFile
 async fn get_index() -> Result<NamedFile, NotFound<String>> {
     NamedFile::open("../frontend/dist/index.html")
@@ -87,5 +93,5 @@ fn secret(user: User) -> String {
 #[launch]
 async fn rocket() -> _ {
     database::init().await;
-    rocket::build().mount("/", routes![index, static_files, login, register, secret])
+    rocket::build().mount("/", routes![index, static_files, login, register, logout, secret])
 }
