@@ -1,4 +1,4 @@
-use std::path::Path; 
+use std::path::Path;
 use std::process::Command;
 
 const FRONTEND_DIR: &str = "../frontend";

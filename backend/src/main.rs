@@ -1,15 +1,40 @@
-use rocket::{routes, launch, get, post};
 use rocket::fs::NamedFile;
 use rocket::response::status::NotFound;
+use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
 
 use common::from_str;
 
-#[post("/api/register", data="<incoming>")]
-async fn upload(incoming: String) -> String {
+mod database;
+
+#[post("/api/register", data = "<incoming>")]
+async fn register(incoming: String) -> String {
     match from_str(&incoming) {
-        Some(login) => login.username.to_owned(),
-        None => "Error".to_owned()
+        Some(login) => {
+            let list = database::query_login_data(login.clone()).await;
+            match list.len() {
+                0 => {
+                    database::create_new_login(login).await;
+                    "Yay!".to_owned()
+                },
+                _ => "Error".to_owned(),
+            }
+        }
+        None => "Error".to_owned(),
+    }
+}
+
+#[post("/api/login", data = "<incoming>")]
+async fn login(incoming: String) -> String {
+    match from_str(&incoming) {
+        Some(login) => {
+            let list = database::query_login_data(login).await;
+            match list.len() {
+                1 => "Yay!".to_owned(),
+                _ => "Error".to_owned(),
+            }
+        }
+        None => "Error".to_owned(),
     }
 }
 
@@ -37,6 +62,7 @@ async fn index() -> Result<NamedFile, NotFound<String>> {
 }
 
 #[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, static_files, upload])
+async fn rocket() -> _ {
+    database::init().await;
+    rocket::build().mount("/", routes![index, static_files, login, register])
 }

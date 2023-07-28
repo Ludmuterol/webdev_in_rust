@@ -11,8 +11,8 @@ pub struct Props {
     pub handle_submit: Callback<LoginData>,
 }
 
-#[function_component(LoginForm)]
-pub fn login_form(props: &Props) -> Html {
+#[function_component(RegisterForm)]
+pub fn register_form(props: &Props) -> Html {
     let username_state = use_state(|| "".to_string());
     let username_changed = Callback::from({
         let username_state = username_state.clone();
@@ -43,7 +43,7 @@ pub fn login_form(props: &Props) -> Html {
         <form onsubmit={on_submit}>
             <TextInput name="username" handle_onchange={username_changed} />
             <PassInput name="password" handle_onchange={password_changed} />
-            <CustomButton label="Login" />
+            <CustomButton label="Register" />
         </form>
     }
 }
