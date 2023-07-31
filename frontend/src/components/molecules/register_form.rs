@@ -41,8 +41,8 @@ pub fn register_form(props: &Props) -> Html {
     });
     html! {
         <form onsubmit={on_submit}>
-            <TextInput name="username" handle_onchange={username_changed} />
-            <PassInput name="password" handle_onchange={password_changed} />
+            <TextInput name="username" handle_onchange={username_changed} /> <br/>
+            <PassInput name="password" handle_onchange={password_changed} /> <br/>
             <CustomFormButton label="Register" />
         </form>
     }
