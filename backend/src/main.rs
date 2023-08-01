@@ -9,12 +9,13 @@ use std::path::PathBuf;
 use common::from_str;
 
 mod database;
+mod crypto;
 
 #[post("/api/register", data = "<incoming>")]
 async fn register(incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
-            let list = database::query_login_data(login.clone()).await;
+            let list = database::query_username(login.clone()).await;
             match list.len() {
                 0 => {
                     database::create_new_login(login).await;
@@ -31,13 +32,13 @@ async fn register(incoming: String) -> String {
 async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
-            let list = database::query_login_data(login).await;
-            match list.len() {
-                1 => {
+            let res = database::check_login_data(login).await;
+            match res {
+                Ok(_) => {
                     jar.add_private(Cookie::new("user_id", "1".to_owned()));
                     "Ok".to_owned()
                 },
-                _ => "Error".to_owned(),
+                Err(_) => "Error".to_owned(),
             }
         }
         None => "Error".to_owned(),
@@ -86,7 +87,7 @@ impl<'r> FromRequest<'r> for User {
 }
 
 #[get("/secret")]
-fn secret(user: User) -> String {
+fn secret(_user: User) -> String {
     "Secret!".to_owned()
 }
 
