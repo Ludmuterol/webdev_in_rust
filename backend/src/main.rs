@@ -5,6 +5,7 @@ use rocket::request::FromRequest;
 use rocket::response::status::NotFound;
 use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
+use pwned::api::*;
 
 use common::from_str;
 
@@ -18,10 +19,24 @@ async fn register(incoming: String) -> String {
             let list = database::query_username(login.clone()).await;
             match list.len() {
                 0 => {
-                    database::create_new_login(login).await;
-                    "Ok".to_owned()
+                    let pwned = PwnedBuilder::default().build().unwrap();
+                    match pwned.check_password(login.password.clone()).await {
+                        Ok(pwd) => {
+                            match pwd.found {
+                                true => { return "Error: This is a known Password!".to_owned(); },
+                                false => {
+                                    database::create_new_login(login).await;
+                                    return "Ok".to_owned();
+                                },
+                            }
+                        },
+                        Err(e) => {
+                            println!("Error: {}", e);
+                            "Error".to_owned()
+                        },
+                    }
                 },
-                _ => "Error".to_owned(),
+                _ => "Username already taken".to_owned(),
             }
         }
         None => "Error".to_owned(),

@@ -17,27 +17,37 @@ enum State {
 
 #[styled_component(RegLog)]
 pub fn reglog() -> Html {
-    let on_login_submit = |data: LoginData|{
-        wasm_bindgen_futures::spawn_local(async move {
-            let res = Request::post("/api/login")
-                .body(data.to_str().unwrap())
-                .unwrap()
-                .send()
-                .await;
-            let content = res.unwrap().text().await.unwrap();
-            log!(content);
-        });
+    let response_string = use_state(||"".to_owned());
+    let on_login_submit = {
+        let response_string = response_string.clone();
+        move |data: LoginData|{
+            let response_string = response_string.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                let res = Request::post("/api/login")
+                    .body(data.to_str().unwrap())
+                    .unwrap()
+                    .send()
+                    .await;
+                let content = res.unwrap().text().await.unwrap();
+                response_string.set(content);
+            });
+        }
     };
-    let on_register_submit = |data: LoginData|{
-        wasm_bindgen_futures::spawn_local(async move {
-            let res = Request::post("/api/register")
-                .body(data.to_str().unwrap())
-                .unwrap()
-                .send()
-                .await;
-            let content = res.unwrap().text().await.unwrap();
-            log!(content);
-        });
+    let on_register_submit = {
+        let response_string = response_string.clone();
+        move |data: LoginData|{
+            let response_string = response_string.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                let response_string = response_string.clone();
+                let res = Request::post("/api/register")
+                    .body(data.to_str().unwrap())
+                    .unwrap()
+                    .send()
+                    .await;
+                let content = res.unwrap().text().await.unwrap();
+                response_string.set(content);
+            });
+        }
     }; 
     let site_state = use_state(|| State::Login);
     let on_change_reg = {
@@ -58,7 +68,7 @@ pub fn reglog() -> Html {
     };
     html! {
         <div class={css!{
-            background: black;
+            background: gray;
         }}>
         <div class={css!{
             display: flex;
@@ -77,6 +87,13 @@ pub fn reglog() -> Html {
         } else {
             <RegisterForm handle_submit={on_register_submit}/>
         }
+        <br/>
+        </div>
+        <div class={css!{
+            display: flex;
+            justify-content: center;
+        }}>
+        {&*response_string}
         </div>
         </div>
     }
