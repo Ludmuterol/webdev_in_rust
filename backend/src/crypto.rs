@@ -5,7 +5,7 @@ use ring::{digest, pbkdf2, rand};
 
 const PEPPER_FILE: &[u8] = include_str!("../pepper.txt").as_bytes();
 
-pub fn encrypt(secret: String) -> (String, String) {
+pub fn encrypt(secret: &String) -> (String, String) {
     let mut salt = [0u8; digest::SHA512_OUTPUT_LEN];
     rand::SystemRandom::new().fill(&mut salt).unwrap();
     let mut peppered_secret: Vec<u8> = secret.as_bytes().to_vec();
@@ -15,7 +15,7 @@ pub fn encrypt(secret: String) -> (String, String) {
     (HEXUPPER.encode(&salt), HEXUPPER.encode(&pbkdf2_hash))
 }
 
-pub fn verify(input: String, salt_encoded: &String, actual_hash: &String) -> Result<(), ()> {
+pub fn verify(input: &String, salt_encoded: &String, actual_hash: &String) -> Result<(), ()> {
     let salt = HEXUPPER.decode(salt_encoded.as_bytes()).unwrap();
     let mut peppered_input: Vec<u8> = input.as_bytes().to_vec();
     peppered_input.extend(PEPPER_FILE);
@@ -25,4 +25,11 @@ pub fn verify(input: String, salt_encoded: &String, actual_hash: &String) -> Res
         Ok(_) => Ok(()),
         Err(_) => Err(()),
     }
+}
+
+pub fn new_session_id() -> String {
+    let mut sid_bytes = [0u8; 512];
+    let rng = rand::SystemRandom::new();
+    rng.fill(&mut sid_bytes).unwrap();
+    HEXUPPER.encode(&sid_bytes)
 }

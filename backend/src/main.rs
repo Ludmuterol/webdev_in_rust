@@ -1,5 +1,6 @@
+use database::{create_new_session, query_sid};
 use rocket::fs::NamedFile;
-use rocket::http::{CookieJar, Cookie};
+use rocket::http::{CookieJar, Cookie, SameSite};
 use rocket::outcome::IntoOutcome;
 use rocket::request::FromRequest;
 use rocket::response::status::NotFound;
@@ -16,7 +17,7 @@ mod crypto;
 async fn register(incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
-            let list = database::query_username(login.clone()).await;
+            let list = database::query_username(&login).await;
             match list.len() {
                 0 => {
                     let pwned = PwnedBuilder::default().build().unwrap();
@@ -25,7 +26,7 @@ async fn register(incoming: String) -> String {
                             match pwd.found {
                                 true => { return "Error: This is a known Password!".to_owned(); },
                                 false => {
-                                    database::create_new_login(login).await;
+                                    database::create_new_login(&login).await;
                                     return "Ok".to_owned();
                                 },
                             }
@@ -47,10 +48,16 @@ async fn register(incoming: String) -> String {
 async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
-            let res = database::check_login_data(login).await;
+            let res = database::check_login_data(&login).await;
             match res {
                 Ok(_) => {
-                    jar.add_private(Cookie::new("user_id", "1".to_owned()));
+                    let mut c = Cookie::new("id", create_new_session(login.username).await);
+                    //c.set_secure(true);
+                    c.set_http_only(true);
+                    c.set_same_site(SameSite::Strict);
+                    c.set_max_age(None);
+                    c.set_expires(None);
+                    jar.add_private(c);
                     "Ok".to_owned()
                 },
                 Err(_) => "Error".to_owned(),
@@ -62,7 +69,7 @@ async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
 
 #[get("/api/logout")]
 async fn logout(jar: &CookieJar<'_>) -> String {
-    jar.remove_private(Cookie::named("user_id"));
+    jar.remove_private(Cookie::named("id"));
     "Ok".to_owned()
 }
 
@@ -89,15 +96,26 @@ async fn index() -> Result<NamedFile, NotFound<String>> {
     get_index().await
 }
 
-struct User(usize);
+struct User;
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for User {
        type Error = std::convert::Infallible;
        async fn from_request(request: &'r rocket::Request<'_>) ->  rocket::request::Outcome<User,Self::Error> {
-           request.cookies().get_private("user_id").and_then(|cookie| cookie.value().parse().ok())
-               .map(User)
-               .or_forward(())
+           match request.cookies().get_private("id") {
+               Some(cookie) => {
+                    match cookie.value().parse::<String>().ok() {
+                       Some(sid) => {
+                           match query_sid(&sid).await.len() {
+                               1 => Some(User),
+                               _ => None,
+                           }
+                       },
+                       None => None,
+                   }
+               },
+               None => None,
+           }.or_forward(())
        }
 }
 
