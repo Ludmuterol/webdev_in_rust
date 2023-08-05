@@ -1,17 +1,17 @@
 use database::{create_new_session, query_sid};
+use pwned::api::*;
 use rocket::fs::NamedFile;
-use rocket::http::{CookieJar, Cookie, SameSite};
+use rocket::http::{Cookie, CookieJar, SameSite};
 use rocket::outcome::IntoOutcome;
 use rocket::request::FromRequest;
 use rocket::response::status::NotFound;
 use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
-use pwned::api::*;
 
 use common::from_str;
 
-mod database;
 mod crypto;
+mod database;
 
 #[post("/api/register", data = "<incoming>")]
 async fn register(incoming: String) -> String {
@@ -22,21 +22,21 @@ async fn register(incoming: String) -> String {
                 0 => {
                     let pwned = PwnedBuilder::default().build().unwrap();
                     match pwned.check_password(login.password.clone()).await {
-                        Ok(pwd) => {
-                            match pwd.found {
-                                true => { return "Error: This is a known Password!".to_owned(); },
-                                false => {
-                                    database::create_new_login(&login).await;
-                                    return "Ok".to_owned();
-                                },
+                        Ok(pwd) => match pwd.found {
+                            true => {
+                                return "Error: This is a known Password!".to_owned();
+                            }
+                            false => {
+                                database::create_new_login(&login).await;
+                                return "Ok".to_owned();
                             }
                         },
                         Err(e) => {
                             println!("Error: {}", e);
                             "Error".to_owned()
-                        },
+                        }
                     }
-                },
+                }
                 _ => "Username already taken".to_owned(),
             }
         }
@@ -52,14 +52,14 @@ async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
             match res {
                 Ok(_) => {
                     let mut c = Cookie::new("id", create_new_session(login.username).await);
-                    //c.set_secure(true);
+                    c.set_secure(true);
                     c.set_http_only(true);
                     c.set_same_site(SameSite::Strict);
                     c.set_max_age(None);
                     c.set_expires(None);
                     jar.add_private(c);
                     "Ok".to_owned()
-                },
+                }
                 Err(_) => "Error".to_owned(),
             }
         }
@@ -100,23 +100,22 @@ struct User;
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for User {
-       type Error = std::convert::Infallible;
-       async fn from_request(request: &'r rocket::Request<'_>) ->  rocket::request::Outcome<User,Self::Error> {
-           match request.cookies().get_private("id") {
-               Some(cookie) => {
-                    match cookie.value().parse::<String>().ok() {
-                       Some(sid) => {
-                           match query_sid(&sid).await.len() {
-                               1 => Some(User),
-                               _ => None,
-                           }
-                       },
-                       None => None,
-                   }
-               },
-               None => None,
-           }.or_forward(())
-       }
+    type Error = std::convert::Infallible;
+    async fn from_request(
+        request: &'r rocket::Request<'_>,
+    ) -> rocket::request::Outcome<User, Self::Error> {
+        match request.cookies().get_private("id") {
+            Some(cookie) => match cookie.value().parse::<String>().ok() {
+                Some(sid) => match query_sid(&sid).await.len() {
+                    1 => Some(User),
+                    _ => None,
+                },
+                None => None,
+            },
+            None => None,
+        }
+        .or_forward(())
+    }
 }
 
 #[get("/secret")]
@@ -127,5 +126,8 @@ fn secret(_user: User) -> String {
 #[launch]
 async fn rocket() -> _ {
     database::init().await;
-    rocket::build().mount("/", routes![index, static_files, login, register, logout, secret])
+    rocket::build().mount(
+        "/",
+        routes![index, static_files, login, register, logout, secret],
+    )
 }

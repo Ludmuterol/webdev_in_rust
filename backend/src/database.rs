@@ -5,7 +5,7 @@ use surrealdb::opt::auth::Root;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
-use crate::crypto::{encrypt, verify, new_session_id};
+use crate::crypto::{encrypt, new_session_id, verify};
 
 static DB: Surreal<Client> = Surreal::init();
 
@@ -34,29 +34,35 @@ pub async fn init() {
 }
 
 pub async fn query_username(ld: &LoginData) -> Vec<LoginDatabaseEntry> {
-    let mut result = DB.query(format!(
-                "SELECT * FROM type::table($table) WHERE username = '{}'",
-                ld.username,
-            )).bind(("table", "logins")).await.unwrap();
+    let mut result = DB
+        .query(format!(
+            "SELECT * FROM type::table($table) WHERE username = '{}'",
+            ld.username,
+        ))
+        .bind(("table", "logins"))
+        .await
+        .unwrap();
     result.take(0).unwrap()
 }
 
-pub async fn check_login_data(ld: &LoginData) -> Result<(),()> {
+pub async fn check_login_data(ld: &LoginData) -> Result<(), ()> {
     let users = query_username(&ld).await;
     match users.len() {
-        1 => {
-            match verify(&ld.password, &(users[0].salt), &(users[0].pw_hash)) {
-                Ok(_) => Ok(()),
-                Err(_) => Err(())
-            }
+        1 => match verify(&ld.password, &(users[0].salt), &(users[0].pw_hash)) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(()),
         },
-        _ => Err(())
+        _ => Err(()),
     }
 }
 
 pub async fn create_new_login(ld: &LoginData) {
     let (salt, pw_hash) = encrypt(&ld.password);
-    let entry = LoginDatabaseEntry {username: ld.username.clone(), pw_hash, salt};
+    let entry = LoginDatabaseEntry {
+        username: ld.username.clone(),
+        pw_hash,
+        salt,
+    };
     let _record: Record = DB.create("logins").content(entry).await.unwrap();
 }
 
@@ -67,10 +73,14 @@ pub struct SessionDatabaseEntry {
 }
 
 pub async fn query_sid(sid: &String) -> Vec<SessionDatabaseEntry> {
-    let mut result = DB.query(format!(
-                "SELECT * FROM type::table($table) WHERE sid = '{}'",
-                sid,
-            )).bind(("table", "sessions")).await.unwrap();
+    let mut result = DB
+        .query(format!(
+            "SELECT * FROM type::table($table) WHERE sid = '{}'",
+            sid,
+        ))
+        .bind(("table", "sessions"))
+        .await
+        .unwrap();
     result.take(0).unwrap()
 }
 
@@ -79,7 +89,10 @@ pub async fn create_new_session(username: String) -> String {
     while query_sid(&sid).await.len() != 0 {
         sid = new_session_id();
     }
-    let entry = SessionDatabaseEntry {sid: sid.clone(), username};
+    let entry = SessionDatabaseEntry {
+        sid: sid.clone(),
+        username,
+    };
     let _record: Record = DB.create("sessions").content(entry).await.unwrap();
     sid
 }

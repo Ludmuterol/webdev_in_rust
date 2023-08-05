@@ -1,7 +1,7 @@
-use std::num::NonZeroU32;
 use data_encoding::HEXUPPER;
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2, rand};
+use std::num::NonZeroU32;
 
 const PEPPER_FILE: &[u8] = include_str!("../pepper.txt").as_bytes();
 
@@ -11,7 +11,13 @@ pub fn encrypt(secret: &String) -> (String, String) {
     let mut peppered_secret: Vec<u8> = secret.as_bytes().to_vec();
     peppered_secret.extend(PEPPER_FILE);
     let mut pbkdf2_hash = [0u8; digest::SHA512_OUTPUT_LEN];
-    pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA512, NonZeroU32::new(210_000).unwrap(), &salt, &peppered_secret, &mut pbkdf2_hash);
+    pbkdf2::derive(
+        pbkdf2::PBKDF2_HMAC_SHA512,
+        NonZeroU32::new(210_000).unwrap(),
+        &salt,
+        &peppered_secret,
+        &mut pbkdf2_hash,
+    );
     (HEXUPPER.encode(&salt), HEXUPPER.encode(&pbkdf2_hash))
 }
 
@@ -20,7 +26,13 @@ pub fn verify(input: &String, salt_encoded: &String, actual_hash: &String) -> Re
     let mut peppered_input: Vec<u8> = input.as_bytes().to_vec();
     peppered_input.extend(PEPPER_FILE);
     let previously_derived = HEXUPPER.decode(actual_hash.as_bytes()).unwrap();
-    let res = pbkdf2::verify(pbkdf2::PBKDF2_HMAC_SHA512, NonZeroU32::new(210_000).unwrap(), &salt, &peppered_input, &previously_derived);
+    let res = pbkdf2::verify(
+        pbkdf2::PBKDF2_HMAC_SHA512,
+        NonZeroU32::new(210_000).unwrap(),
+        &salt,
+        &peppered_input,
+        &previously_derived,
+    );
     match res {
         Ok(_) => Ok(()),
         Err(_) => Err(()),
