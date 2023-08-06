@@ -1,8 +1,9 @@
+use chrono::Utc;
 use common::LoginData;
 use serde::{Deserialize, Serialize};
 use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::opt::auth::Root;
-use surrealdb::sql::Thing;
+use surrealdb::sql::{Datetime, Duration, Thing};
 use surrealdb::Surreal;
 
 use crate::crypto::{encrypt, new_session_id, verify};
@@ -35,9 +36,7 @@ pub async fn init() {
 
 pub async fn query_username(ld: &LoginData) -> Vec<LoginDatabaseEntry> {
     let mut result = DB
-        .query(
-            "SELECT * FROM type::table($table) WHERE username = $username"
-        )
+        .query("SELECT * FROM type::table($table) WHERE username = $username")
         .bind(("table", "logins"))
         .bind(("username", ld.username.to_owned()))
         .await
@@ -68,15 +67,14 @@ pub async fn create_new_login(ld: &LoginData) {
 
 #[derive(Deserialize, Serialize)]
 pub struct SessionDatabaseEntry {
-    sid: String,
-    username: String,
+    pub sid: String,
+    pub username: String,
+    pub expiration: Datetime,
 }
 
 pub async fn query_sid(sid: &String) -> Vec<SessionDatabaseEntry> {
     let mut result = DB
-        .query(
-            "SELECT * FROM type::table($table) WHERE sid = $sid"
-        )
+        .query("SELECT * FROM type::table($table) WHERE sid = $sid")
         .bind(("table", "sessions"))
         .bind(("sid", sid))
         .await
@@ -92,7 +90,16 @@ pub async fn create_new_session(username: String) -> String {
     let entry = SessionDatabaseEntry {
         sid: sid.clone(),
         username,
+        expiration: Duration(std::time::Duration::from_secs(10)) + Datetime(Utc::now()),
     };
     let _record: Record = DB.create("sessions").content(entry).await.unwrap();
     sid
+}
+
+pub async fn clean_up_old_sessions() {
+    DB.query("DELETE type::table($table) WHERE expiration < $ts")
+        .bind(("table", "sessions"))
+        .bind(("ts", Datetime(Utc::now())))
+        .await
+        .unwrap();
 }

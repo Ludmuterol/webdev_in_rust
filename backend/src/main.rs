@@ -1,3 +1,4 @@
+use chrono::Utc;
 use database::{create_new_session, query_sid};
 use pwned::api::*;
 use rocket::fs::NamedFile;
@@ -7,6 +8,7 @@ use rocket::request::FromRequest;
 use rocket::response::status::NotFound;
 use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
+use surrealdb::sql::Datetime;
 
 use common::from_str;
 
@@ -106,8 +108,14 @@ impl<'r> FromRequest<'r> for User {
     ) -> rocket::request::Outcome<User, Self::Error> {
         match request.cookies().get_private("id") {
             Some(cookie) => match cookie.value().parse::<String>().ok() {
-                Some(sid) => match query_sid(&sid).await.len() {
-                    1 => Some(User),
+                Some(sid) => match query_sid(&sid).await {
+                    i if i.len() == 1 => {
+                        if i[0].expiration > Datetime(Utc::now()) {
+                            Some(User)
+                        } else {
+                            None
+                        }
+                    }
                     _ => None,
                 },
                 None => None,
