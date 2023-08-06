@@ -35,11 +35,11 @@ pub async fn init() {
 
 pub async fn query_username(ld: &LoginData) -> Vec<LoginDatabaseEntry> {
     let mut result = DB
-        .query(format!(
-            "SELECT * FROM type::table($table) WHERE username = '{}'",
-            ld.username,
-        ))
+        .query(
+            "SELECT * FROM type::table($table) WHERE username = $username"
+        )
         .bind(("table", "logins"))
+        .bind(("username", ld.username.to_owned()))
         .await
         .unwrap();
     result.take(0).unwrap()
@@ -74,11 +74,11 @@ pub struct SessionDatabaseEntry {
 
 pub async fn query_sid(sid: &String) -> Vec<SessionDatabaseEntry> {
     let mut result = DB
-        .query(format!(
-            "SELECT * FROM type::table($table) WHERE sid = '{}'",
-            sid,
-        ))
+        .query(
+            "SELECT * FROM type::table($table) WHERE sid = $sid"
+        )
         .bind(("table", "sessions"))
+        .bind(("sid", sid))
         .await
         .unwrap();
     result.take(0).unwrap()
