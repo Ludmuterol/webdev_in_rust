@@ -83,6 +83,7 @@ pub async fn query_sid(sid: &String) -> Vec<SessionDatabaseEntry> {
 }
 
 pub async fn create_new_session(username: String) -> String {
+    clean_up_old_sessions().await;
     let mut sid = new_session_id();
     while query_sid(&sid).await.len() != 0 {
         sid = new_session_id();
