@@ -10,7 +10,7 @@ use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
 use surrealdb::sql::Datetime;
 
-use common::from_str;
+use common::{from_str, LoginData};
 
 mod crypto;
 mod database;
@@ -19,6 +19,10 @@ mod database;
 async fn register(incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
+            let login = LoginData {
+                username: login.username.to_lowercase(),
+                password: login.password,
+            };
             let list = database::query_username(&login).await;
             match list.len() {
                 0 => {
@@ -50,6 +54,10 @@ async fn register(incoming: String) -> String {
 async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
     match from_str(&incoming) {
         Some(login) => {
+            let login = LoginData {
+                username: login.username.to_lowercase(),
+                password: login.password,
+            };
             let res = database::check_login_data(&login).await;
             match res {
                 Ok(_) => {
