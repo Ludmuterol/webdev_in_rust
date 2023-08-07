@@ -10,14 +10,14 @@ use rocket::{get, launch, post, routes};
 use std::path::PathBuf;
 use surrealdb::sql::Datetime;
 
-use common::{from_str, LoginData};
+use common::{LoginData, ProfileData};
 
 mod crypto;
 mod database;
 
 #[post("/api/register", data = "<incoming>")]
 async fn register(incoming: String) -> String {
-    match from_str(&incoming) {
+    match LoginData::from_str(&incoming) {
         Some(login) => {
             let login = LoginData {
                 username: login.username.to_lowercase(),
@@ -52,7 +52,7 @@ async fn register(incoming: String) -> String {
 
 #[post("/api/login", data = "<incoming>")]
 async fn login(jar: &CookieJar<'_>, incoming: String) -> String {
-    match from_str(&incoming) {
+    match LoginData::from_str(&incoming) {
         Some(login) => {
             let login = LoginData {
                 username: login.username.to_lowercase(),
@@ -139,11 +139,18 @@ fn secret(_user: User) -> String {
     "Secret!".to_owned()
 }
 
+#[get("/api/profile")]
+async fn profile(_user: User, jar: &CookieJar<'_>) -> String {
+    let var = jar.get_private("id").unwrap().value().parse::<String>().unwrap();
+    let i = query_sid(&var).await;
+    ProfileData {username: i[0].username.to_owned() }.to_str().unwrap()
+}
+
 #[launch]
 async fn rocket() -> _ {
     database::init().await;
     rocket::build().mount(
         "/",
-        routes![index, static_files, login, register, logout, secret],
+        routes![index, static_files, login, register, logout, secret, profile],
     )
 }

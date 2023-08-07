@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use zxcvbn::feedback::{Suggestion, Warning};
+use zxcvbn::feedback::Warning;
 use zxcvbn::zxcvbn;
 
 use crate::components::atoms::custom_form_button::CustomFormButton;
