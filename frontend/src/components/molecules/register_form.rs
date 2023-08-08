@@ -49,6 +49,7 @@ pub fn register_form(props: &Props) -> Html {
                                 let mut str = "".to_string();
                                 for a in sugs {
                                     str.push_str(a.to_string().as_str());
+                                    str.push_str(" ");
                                 }
                                 suggestions.set(str);
                             }
@@ -90,17 +91,23 @@ pub fn register_form(props: &Props) -> Html {
             if !(*suggestions).is_empty() {
                 <div class={css!(r#"
                     background: #FFB46B;
-                    border-color: #FF7F00;
+                    border: solid #FF7F00;
+                    border-radius: 25px;
+                    padding: 12.5px;
+                    margin: 5px;
                 "#)}>
-                    {"Suggestions: "}{&*suggestions} <br/>
+                    {&*suggestions} 
                 </div>
             }
             if (*warning).is_some() {
                 <div class={css!(r#"
                     background: #FF7171;
-                    border-color: #FF0000;
+                    border: solid #FF0000;
+                    border-radius: 25px;
+                    padding: 12.5px;
+                    margin: 5px;
                 "#)}>
-                    {"Warning: "}{*warning} <br/>
+                    {*warning}
                 </div>
             }
             <CustomFormButton label="Register" />
