@@ -90,31 +90,17 @@ pub fn reglog(props: &Props) -> Html {
         <div class={css!{
             background: gray;
         }}>
-        <div class={css!{
-            display: flex;
-            justify-content: center;
-        }}>
+        
             <CustomButton label="Register" handle_onclick={on_change_reg}/>
             <CustomButton label="Login" handle_onclick={on_change_log}/>
-        </div>
             <br/>
-        <div class={css!{
-            display: flex;
-            justify-content: center;
-        }}>
-        if *site_state == State::Login {
+                if *site_state == State::Login {
             <LoginForm handle_submit={on_login_submit}/>
         } else {
             <RegisterForm handle_submit={on_register_submit}/>
         }
         <br/>
-        </div>
-        <div class={css!{
-            display: flex;
-            justify-content: center;
-        }}>
-        {&*response_string}
-        </div>
+                {&*response_string}
         </div>
     }
 }

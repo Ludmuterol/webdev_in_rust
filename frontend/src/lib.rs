@@ -1,5 +1,5 @@
 use common::ProfileData;
-use stylist::{yew::styled_component, Style};
+use stylist::yew::{styled_component, use_media_query};
 use yew::prelude::*;
 
 mod components;
@@ -7,19 +7,67 @@ mod components;
 use components::organisms::{reglog::RegLog, mini_profile::MiniProfile};
 use components::atoms::main_title::MainTitle;
 
-const STYLE_FILE: &str = include_str!("main.css");
-
-
 #[styled_component]
 pub fn App() -> Html {
-    let stylesheet = Style::new(STYLE_FILE).unwrap();
     let profile_data_handle: UseStateHandle<Option<ProfileData>> = use_state(|| None);
-    
+    let is_big = use_media_query("(min-width: 30em)");
     html! {
-        <div class={stylesheet}>
-            <MainTitle title="Hi there!2" />
-            <RegLog profile_data_handle={profile_data_handle.clone()} />
-            <MiniProfile profile_data_handle={profile_data_handle} />
+        <>
+        <div class={
+            if is_big {
+                css!(r#"
+	                display: grid;
+	                gap: 10px;
+                    height: 100%;
+		            grid-template-columns: 3fr 1fr;
+		            grid-template-rows: auto 1fr 100px;"#)
+            } else {
+                css!(r#"
+	                display: grid;
+	                gap: 10px;
+                    height: 100%;"#)
+            }
+        }>
+            <div class={css!(r#"
+                grid-column: 1 / -1;
+	            background: #F1F3F4;
+                border-color: #d5d5d5;
+                display: grid;
+                color: aqua;
+                display:flex;
+                flex-direction:row;
+            "#)}>
+
+                <div class={css!(r#"
+                    flex: 2;
+                "#)}>
+                    <MainTitle title="Hi there!" />
+                </div>
+                <div class={css!(r#"
+                "#)}>
+                    <MiniProfile profile_data_handle={profile_data_handle.clone()} />
+                </div>
+            </div>
+            <div class={css!(r#"
+	            background: #ffede0;
+	            border-color: #df6c20;
+            "#)}>
+                {"MAIN TEXT BLABLABLA"}
+            </div>
+            <div class={css!(r#"
+	            background: #ebf5d7;
+	            border-color: #8db243;
+            "#)}>
+                <RegLog profile_data_handle={profile_data_handle.clone()} />
+            </div>
+            <div class={css!(r#"
+	            grid-column: 1 / -1;
+	            background: #e4ebf2;
+	            border-color: #8a9da8;
+            "#)}>
+                {"FOOTER TEXT BLABLABLA"}
+            </div>
         </div>
+        </>
     }
 }
