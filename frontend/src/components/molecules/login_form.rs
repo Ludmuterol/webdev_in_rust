@@ -1,3 +1,4 @@
+use stylist::yew::styled_component;
 use yew::prelude::*;
 
 use crate::components::atoms::custom_form_button::CustomFormButton;
@@ -11,7 +12,7 @@ pub struct Props {
     pub handle_submit: Callback<LoginData>,
 }
 
-#[function_component(LoginForm)]
+#[styled_component(LoginForm)]
 pub fn login_form(props: &Props) -> Html {
     let username_state = use_state(|| "".to_string());
     let username_changed = Callback::from({
@@ -40,10 +41,19 @@ pub fn login_form(props: &Props) -> Html {
         }
     });
     html! {
+        <label>
+        <h2>{"Login"}</h2>
         <form onsubmit={on_submit}>
-            <TextInput name="username" handle_onchange={username_changed} /> <br/>
-            <PassInput name="password" handle_onchange={password_changed} /> <br/>
-            <CustomFormButton label="Login" />
+            <label>
+                {"Username"}
+                <TextInput name="username" handle_onchange={username_changed} />
+            </label>
+            <label>
+                {"Password"}
+                <PassInput name="password" handle_onchange={password_changed} />
+            </label>
+                <CustomFormButton label="Login" />
         </form>
+        </label>
     }
 }

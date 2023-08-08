@@ -18,6 +18,6 @@ pub fn text_input(props: &Props) -> Html {
         handle_onchange.emit(input.value());
     });
     html! {
-       <input type="text" name={props.name.to_owned()} onchange={onchange} placeholder={props.name.to_owned()}/>
+       <input type="text" name={props.name.to_owned()} onchange={onchange} />
     }
 }

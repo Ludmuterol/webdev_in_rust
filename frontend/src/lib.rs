@@ -19,7 +19,7 @@ pub fn App() -> Html {
 	                display: grid;
 	                gap: 10px;
                     height: 100%;
-		            grid-template-columns: 3fr 1fr;
+		            grid-template-columns: 5fr 1fr;
 		            grid-template-rows: auto 1fr 100px;"#)
             } else {
                 css!(r#"
