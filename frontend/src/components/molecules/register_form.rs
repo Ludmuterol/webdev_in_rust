@@ -1,6 +1,6 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
-use zxcvbn::feedback::Warning;
+use zxcvbn::feedback::{Suggestion, Warning};
 use zxcvbn::zxcvbn;
 
 use crate::components::atoms::custom_form_button::CustomFormButton;
@@ -17,7 +17,7 @@ pub struct Props {
 #[styled_component(RegisterForm)]
 pub fn register_form(props: &Props) -> Html {
     let password_estimate = use_state(|| 0u8);
-    let suggestions = use_state(|| "".to_string());
+    let sugtest: UseStateHandle<Option<Vec<Suggestion>>> = use_state(|| None);
     let warning = use_state(|| None::<Warning>);
     let username_state = use_state(|| "".to_string());
     let username_changed = Callback::from({
@@ -31,7 +31,7 @@ pub fn register_form(props: &Props) -> Html {
         let password_state = password_state.clone();
         let username_state = username_state.clone();
         let password_estimate = password_estimate.clone();
-        let suggestions = suggestions.clone();
+        let sugtest = sugtest.clone();
         let warning = warning.clone();
         move |password: String| {
             if password.len() > 0 {
@@ -39,26 +39,22 @@ pub fn register_form(props: &Props) -> Html {
                 password_estimate.set(estimate.score());
                 match estimate.feedback() {
                     None => {
-                        suggestions.set("".to_string());
+                        sugtest.set(None);
                         warning.set(None);
                     }
                     Some(feedback) => {
                         let sugs = feedback.suggestions();
                         match sugs.len() {
-                            i if i > 0 => {
-                                let mut str = "".to_string();
-                                for a in sugs {
-                                    str.push_str(a.to_string().as_str());
-                                    str.push_str(" ");
-                                }
-                                suggestions.set(str);
-                            }
-                            0 => suggestions.set("".to_string()),
+                            i if i > 0 => sugtest.set(Some(sugs.to_vec())),
+                            0 => sugtest.set(None),
                             _ => unreachable!(),
                         }
                         warning.set(feedback.warning());
                     }
                 };
+            } else {
+                sugtest.set(None);
+                warning.set(None);
             }
             password_state.set(password);
         }
@@ -88,17 +84,6 @@ pub fn register_form(props: &Props) -> Html {
                 <PassInput name="password" handle_onchange={password_changed} /> <br/>
             </label>
             {"Score: "} {*password_estimate} <br/>
-            if !(*suggestions).is_empty() {
-                <div class={css!(r#"
-                    background: #FFB46B;
-                    border: solid #FF7F00;
-                    border-radius: 25px;
-                    padding: 12.5px;
-                    margin: 5px;
-                "#)}>
-                    {&*suggestions} 
-                </div>
-            }
             if (*warning).is_some() {
                 <div class={css!(r#"
                     background: #FF7171;
@@ -109,6 +94,23 @@ pub fn register_form(props: &Props) -> Html {
                 "#)}>
                     {*warning}
                 </div>
+            }
+            if (*sugtest).is_some() {
+                {
+                    (*sugtest).clone().unwrap().iter().map(|sug| {
+                        html! {
+                            <div class={css!(r#"
+                                background: #FFB46B;
+                                border: solid #FF7F00;
+                                border-radius: 25px;
+                                padding: 12.5px;
+                                margin: 5px;
+                            "#)}>
+                                {sug.to_string()}
+                            </div>
+                        }
+                    }).collect::<Html>()
+                }
             }
             <CustomFormButton label="Register" />
         </form>
