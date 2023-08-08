@@ -4,8 +4,8 @@ use yew::prelude::*;
 
 mod components;
 
-use components::organisms::{reglog::RegLog, mini_profile::MiniProfile};
 use components::atoms::main_title::MainTitle;
+use components::organisms::{mini_profile::MiniProfile, reglog::RegLog};
 
 #[styled_component]
 pub fn App() -> Html {

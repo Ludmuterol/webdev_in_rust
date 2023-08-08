@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct LoginData {
@@ -7,21 +7,19 @@ pub struct LoginData {
 }
 
 impl LoginData {
-    pub fn to_str(self: &Self) -> Option<String>{
+    pub fn to_str(self: &Self) -> Option<String> {
         match serde_json::to_string(self) {
             Ok(res) => Some(res),
-            Err(_) => None
+            Err(_) => None,
         }
     }
-    pub fn from_str(str: &String) -> Option<LoginData>{
+    pub fn from_str(str: &String) -> Option<LoginData> {
         match serde_json::from_str(str) {
             Ok(res) => Some(res),
-            Err(_) => None
+            Err(_) => None,
         }
     }
 }
-
-
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct ProfileData {
@@ -29,18 +27,16 @@ pub struct ProfileData {
 }
 
 impl ProfileData {
-    pub fn to_str(self: &Self) -> Option<String>{
+    pub fn to_str(self: &Self) -> Option<String> {
         match serde_json::to_string(self) {
             Ok(res) => Some(res),
-            Err(_) => None
+            Err(_) => None,
         }
     }
-    pub fn from_str(str: &String) -> Option<ProfileData>{
+    pub fn from_str(str: &String) -> Option<ProfileData> {
         match serde_json::from_str(str) {
             Ok(res) => Some(res),
-            Err(_) => None
+            Err(_) => None,
         }
     }
 }
-
-

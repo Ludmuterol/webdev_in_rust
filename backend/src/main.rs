@@ -141,9 +141,18 @@ fn secret(_user: User) -> String {
 
 #[get("/api/profile")]
 async fn profile(_user: User, jar: &CookieJar<'_>) -> String {
-    let var = jar.get_private("id").unwrap().value().parse::<String>().unwrap();
+    let var = jar
+        .get_private("id")
+        .unwrap()
+        .value()
+        .parse::<String>()
+        .unwrap();
     let i = query_sid(&var).await;
-    ProfileData {username: i[0].username.to_owned() }.to_str().unwrap()
+    ProfileData {
+        username: i[0].username.to_owned(),
+    }
+    .to_str()
+    .unwrap()
 }
 
 #[launch]
@@ -151,6 +160,14 @@ async fn rocket() -> _ {
     database::init().await;
     rocket::build().mount(
         "/",
-        routes![index, static_files, login, register, logout, secret, profile],
+        routes![
+            index,
+            static_files,
+            login,
+            register,
+            logout,
+            secret,
+            profile
+        ],
     )
 }

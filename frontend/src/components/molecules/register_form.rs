@@ -40,7 +40,7 @@ pub fn register_form(props: &Props) -> Html {
                     None => {
                         suggestions.set("".to_string());
                         warning.set(None);
-                    },
+                    }
                     Some(feedback) => {
                         let sugs = feedback.suggestions();
                         match sugs.len() {
@@ -50,12 +50,12 @@ pub fn register_form(props: &Props) -> Html {
                                     str.push_str(a.to_string().as_str());
                                 }
                                 suggestions.set(str);
-                            },
+                            }
                             0 => suggestions.set("".to_string()),
                             _ => unreachable!(),
                         }
                         warning.set(feedback.warning());
-                    },
+                    }
                 };
             }
             password_state.set(password);
