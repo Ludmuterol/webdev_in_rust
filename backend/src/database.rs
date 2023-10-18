@@ -28,13 +28,13 @@ pub struct SessionDatabaseEntry {
     pub expiration: Datetime,
 }
 
-pub struct DB {
+pub struct PwDb {
     db: Surreal<Client>,
 }
 
-impl DB {
-    pub async fn init() -> DB {
-        let tmp = DB {
+impl PwDb {
+    pub async fn init() -> PwDb {
+        let tmp = PwDb {
             db: Surreal::new::<Ws>("localhost:8001").await.unwrap()
         };
         tmp.db.signin(Root {

@@ -5,7 +5,7 @@ use yew::prelude::*;
 mod components;
 
 use components::atoms::main_title::MainTitle;
-use components::organisms::{mini_profile::MiniProfile, reglog::RegLog};
+use components::organisms::{mini_profile::MiniProfile, reglog::RegLog, content_menu::ContentMenu};
 
 #[styled_component]
 pub fn App() -> Html {
@@ -52,7 +52,7 @@ pub fn App() -> Html {
 	            background: #ffede0;
 	            border-color: #df6c20;
             "#)}>
-                {"MAIN TEXT BLABLABLA"}
+                <ContentMenu />
             </div>
             <div class={css!(r#"
 	            background: #ebf5d7;

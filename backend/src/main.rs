@@ -14,9 +14,9 @@ use common::{LoginData, ProfileData};
 mod crypto;
 mod database;
 
-use database::DB;
+use database::PwDb;
 #[post("/api/register", data = "<incoming>")]
-async fn register(db: &State<DB>, incoming: String) -> String {
+async fn register(db: &State<PwDb>, incoming: String) -> String {
     match LoginData::from_str(&incoming) {
         Some(login) => {
             let login = LoginData {
@@ -51,7 +51,7 @@ async fn register(db: &State<DB>, incoming: String) -> String {
 }
 
 #[post("/api/login", data = "<incoming>")]
-async fn login(db: &State<DB>, jar: &CookieJar<'_>, incoming: String) -> String {
+async fn login(db: &State<PwDb>, jar: &CookieJar<'_>, incoming: String) -> String {
     match LoginData::from_str(&incoming) {
         Some(login) => {
             let login = LoginData {
@@ -116,7 +116,7 @@ impl<'r> FromRequest<'r> for User {
     ) -> rocket::request::Outcome<User, Self::Error> {
         match request.cookies().get_private("id") {
             Some(cookie) => match cookie.value().parse::<String>().ok() {
-                Some(sid) => match request.rocket().state::<DB>().unwrap().query_sid(&sid).await {
+                Some(sid) => match request.rocket().state::<PwDb>().unwrap().query_sid(&sid).await {
                     i if i.len() == 1 => {
                         if i[0].expiration > Datetime(Utc::now()) {
                             Some(User)
@@ -140,7 +140,7 @@ fn secret(_user: User) -> String {
 }
 
 #[get("/api/profile")]
-async fn profile(db: &State<DB>, _user: User, jar: &CookieJar<'_>) -> String {
+async fn profile(db: &State<PwDb>, _user: User, jar: &CookieJar<'_>) -> String {
     let var = jar
         .get_private("id")
         .unwrap()
@@ -158,7 +158,7 @@ async fn profile(db: &State<DB>, _user: User, jar: &CookieJar<'_>) -> String {
 #[launch]
 async fn rocket() -> _ {
     rocket::build()
-        .manage(DB::init().await)
+        .manage(PwDb::init().await)
         .mount(
             "/",
             routes![
